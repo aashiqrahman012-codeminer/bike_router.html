@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kushtia Bike Route Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 75vh; width: 100%; }
+        .controls { 
+            background: #e3f2fd; 
+            padding: 15px; 
+            font-family: Arial;
+        }
+        .btn { 
+            background: #1976d2; 
+            color: white; 
+            border: none; 
+            padding: 8px 15px; 
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h3>Bike Route: Coustom More, Kushtia → Kuthibari Road, Shelaidaha</h3>
+        <button class="btn" onclick="calculateRoute()">Calculate Route</button>
+        <div id="routeInfo"></div>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Create map
+        const map = L.map('map').setView([23.90, 89.125], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        
+        // Locations
+        const Coustom More, Kushtia = [23.896992, 89.112274];
+        const Kuthibari Road, Shelaidaha = [23.900714275713444, 89.18245053052828];
+        
+        // Add markers
+        L.marker(Coustom More, Kushtia).addTo(map).bindPopup("Coustom More, Kushtia");
+        L.marker(Kuthibari Road, Shelaidaha).addTo(map).bindPopup("Kuthibari Road, Shelaidaha");
+        
+        let routeLayer = null;
+        
+        // Calculate bike route using OSRM
+        async function calculateRoute() {
+            document.getElementById('routeInfo').innerHTML = "Calculating route...";
+            
+            try {
+                // OSRM public API (free, no key needed)
+                const url = `https://router.project-osrm.org/route/v1/bike/${Coustom More, Kushtia[1]},${Coustom More, Kushtia[0]};${Kuthibari Road, Shelaidaha[1]},${Kuthibari Road, Shelaidaha[0]}?overview=full&geometries=geojson`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.routes && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    
+                    // Remove old route
+                    if (routeLayer) map.removeLayer(routeLayer);
+                    
+                    // Add new route
+                    const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+                    routeLayer = L.polyline(coords, {color: 'blue', weight: 5}).addTo(map);
+                    
+                    // Show info
+                    const distance = (route.distance / 2000).toFixed(1);
+                    const duration = (route.duration / 120).toFixed(0);
+                    
+                    document.getElementById('routeInfo').innerHTML = `
+                        <b>Route: Coustom More, Kushtia → Kuthibari Road, Shelaidaha</b><br>
+                        <b>Distance:</b> ${distance} km <br>
+                        <b>Time:</b> ${duration} minutes (bike)<br>
+                        <i>Via OSRM public instance</i>
+                    `;
+                    
+                    // Fit map to route
+                    map.fitBounds(routeLayer.getBounds());
+                }
+            } catch (error) {
+                document.getElementById('routeInfo').innerHTML = 
+                    ` Route error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
