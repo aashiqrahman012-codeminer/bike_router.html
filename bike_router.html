@@ -1,57 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Kushtia Bike Route Planner</title>
+    <title>🚲 Kushtia Bike Route Planner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        #map { height: 75vh; width: 100%; }
+        #map { height: 65vh; width: 100%; }
         .controls { 
-            background: #e3f2fd; 
             padding: 15px; 
+            background: #e3f2fd; 
             font-family: Arial;
         }
-        .btn { 
-            background: #1976d2; 
-            color: white; 
-            border: none; 
-            padding: 8px 15px; 
-            border-radius: 4px;
-            cursor: pointer;
+        .route-info { 
+            background: #bbdefb; 
+            padding: 10px; 
+            border-radius: 4px; 
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="controls">
-        <h3>Bike Route: Coustom More, Kushtia → Kuthibari Road, Shelaidaha</h3>
-        <button class="btn" onclick="calculateRoute()">Calculate Route</button>
-        <div id="routeInfo"></div>
+        <h3>🚲 Bike Route: Kushtia College → Anywhere</h3>
+        <button onclick="routeToKuthibari()">→ Rabindra Kuthibari</button>
+        <button onclick="routeToKGH()">→ Kushtia General Hospital</button>
+        <button onclick="clearRoute()">Clear Route</button>
+        <div class="route-info" id="routeInfo"></div>
     </div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // Create map
-        const map = L.map('map').setView([23.90, 89.125], 14);
+        const map = L.map('map').setView([23.90, 89.125], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         
         // Locations
-        const Coustom More, Kushtia = [23.896992, 89.112274];
-        const Kuthibari Road, Shelaidaha = [23.900714275713444, 89.18245053052828];
+        const college = {name: "Kushtia College", lat: 23.9011, lng: 89.1200};
+        const kuthibari = {name: "Rabindra Kuthibari", lat: 23.8850, lng: 89.1350};
+        const kgh = {name: "Kushtia General Hospital", lat: 23.9080, lng: 89.1180};
         
         // Add markers
-        L.marker(Coustom More, Kushtia).addTo(map).bindPopup("Coustom More, Kushtia");
-        L.marker(Kuthibari Road, Shelaidaha).addTo(map).bindPopup("Kuthibari Road, Shelaidaha");
+        L.marker([college.lat, college.lng])
+            .addTo(map)
+            .bindPopup(college.name);
+        
+        L.marker([kuthibari.lat, kuthibari.lng])
+            .addTo(map)
+            .bindPopup(kuthibari.name);
+        
+        L.marker([kgh.lat, kgh.lng])
+            .addTo(map)
+            .bindPopup(kgh.name);
         
         let routeLayer = null;
         
-        // Calculate bike route using OSRM
-        async function calculateRoute() {
+        // Calculate route
+        async function calculateRoute(dest) {
             document.getElementById('routeInfo').innerHTML = "Calculating route...";
             
             try {
-                // OSRM public API (free, no key needed)
-                const url = `https://router.project-osrm.org/route/v1/bike/${Coustom More, Kushtia[1]},${Coustom More, Kushtia[0]};${Kuthibari Road, Shelaidaha[1]},${Kuthibari Road, Shelaidaha[0]}?overview=full&geometries=geojson`;
+                // OSRM public API (100% free)
+                const url = `https://router.project-osrm.org/route/v1/bike/${college.lng},${college.lat};${dest.lng},${dest.lat}?overview=full&geometries=geojson&steps=true`;
                 
                 const response = await fetch(url);
                 const data = await response.json();
@@ -64,17 +74,23 @@
                     
                     // Add new route
                     const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-                    routeLayer = L.polyline(coords, {color: 'blue', weight: 5}).addTo(map);
+                    routeLayer = L.polyline(coords, {
+                        color: '#2e7d32',
+                        weight: 6,
+                        opacity: 0.8
+                    }).addTo(map);
                     
-                    // Show info
-                    const distance = (route.distance / 2000).toFixed(1);
-                    const duration = (route.duration / 120).toFixed(0);
+                    // Show route info
+                    const distance = (route.distance / 1000).toFixed(1);
+                    const duration = (route.duration / 60).toFixed(0);
+                    const steps = route.legs[0].steps.length;
                     
                     document.getElementById('routeInfo').innerHTML = `
-                        <b>Route: Coustom More, Kushtia → Kuthibari Road, Shelaidaha</b><br>
-                        <b>Distance:</b> ${distance} km <br>
-                        <b>Time:</b> ${duration} minutes (bike)<br>
-                        <i>Via OSRM public instance</i>
+                        <b>🛣️ Route: ${college.name} → ${dest.name}</b><br>
+                        <b>📏 Distance:</b> ${distance} km<br>
+                        <b>⏱️ Time:</b> ${duration} minutes (bike)<br>
+                        <b>📍 Turns:</b> ${steps} instructions<br>
+                        <i>🚲 Via OSRM - knows jute field paths!</i>
                     `;
                     
                     // Fit map to route
@@ -82,8 +98,26 @@
                 }
             } catch (error) {
                 document.getElementById('routeInfo').innerHTML = 
-                    ` Route error: ${error.message}`;
+                    `❌ Route error: ${error.message}`;
             }
+        }
+        
+        // Route buttons
+        function routeToKuthibari() {
+            calculateRoute(kuthibari);
+        }
+        
+        function routeToKGH() {
+            calculateRoute(kgh);
+        }
+        
+        function clearRoute() {
+            if (routeLayer) {
+                map.removeLayer(routeLayer);
+                routeLayer = null;
+            }
+            document.getElementById('routeInfo').innerHTML = "";
+            map.setView([23.90, 89.125], 13);
         }
     </script>
 </body>
