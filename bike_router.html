@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>🚲 Kushtia Bike Route Planner</title>
+    <title>Kushtia Bike Route Planner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -21,9 +21,9 @@
 </head>
 <body>
     <div class="controls">
-        <h3>🚲 Bike Route: Kushtia College → Anywhere</h3>
-        <button onclick="routeToKuthibari()">→ Rabindra Kuthibari</button>
-        <button onclick="routeToKGH()">→ Kushtia General Hospital</button>
+        <h3>Bike Route: Coustom More, Kushtia → Kuthibari Road, Shilaidaha</h3>
+        <button onclick="routeToCMK()">Coustom More, Kushtia →</button>
+        <button onclick="routeToKuthibari()">Rabindra Kuthibari</button>
         <button onclick="clearRoute()">Clear Route</button>
         <div class="route-info" id="routeInfo"></div>
     </div>
@@ -36,22 +36,17 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         
         // Locations
-        const college = {name: "Kushtia College", lat: 23.9011, lng: 89.1200};
-        const kuthibari = {name: "Rabindra Kuthibari", lat: 23.8850, lng: 89.1350};
-        const kgh = {name: "Kushtia General Hospital", lat: 23.9080, lng: 89.1180};
-        
+        const CMK = {name: "Coustom More Kushtia", lat: 23.896992, lng: 89.112274};
+        const kuthibari = {name: "Rabindra Kuthibari", lat: 23.90071918012656, lng: 89.18242907285635};
+                      
         // Add markers
-        L.marker([college.lat, college.lng])
+        L.marker([CMK.lat, CMK.lng])
             .addTo(map)
-            .bindPopup(college.name);
-        
+            .bindPopup(CMK.name);
+
         L.marker([kuthibari.lat, kuthibari.lng])
             .addTo(map)
             .bindPopup(kuthibari.name);
-        
-        L.marker([kgh.lat, kgh.lng])
-            .addTo(map)
-            .bindPopup(kgh.name);
         
         let routeLayer = null;
         
@@ -60,8 +55,8 @@
             document.getElementById('routeInfo').innerHTML = "Calculating route...";
             
             try {
-                // OSRM public API (100% free)
-                const url = `https://router.project-osrm.org/route/v1/bike/${college.lng},${college.lat};${dest.lng},${dest.lat}?overview=full&geometries=geojson&steps=true`;
+                // OSRM public API (free)
+                const url = `https://router.project-osrm.org/route/v1/bike/${CMK.lng},${CMK.lat};${dest.lng},${dest.lat}?overview=full&geometries=geojson&steps=true`;
                 
                 const response = await fetch(url);
                 const data = await response.json();
@@ -86,11 +81,11 @@
                     const steps = route.legs[0].steps.length;
                     
                     document.getElementById('routeInfo').innerHTML = `
-                        <b>🛣️ Route: ${college.name} → ${dest.name}</b><br>
-                        <b>📏 Distance:</b> ${distance} km<br>
-                        <b>⏱️ Time:</b> ${duration} minutes (bike)<br>
-                        <b>📍 Turns:</b> ${steps} instructions<br>
-                        <i>🚲 Via OSRM - knows jute field paths!</i>
+                        <b> Route: ${CMK.name} → ${dest.name}</b><br>
+                        <b> Distance:</b> ${distance} km<br>
+                        <b> Time:</b> ${duration} minutes (bike)<br>
+                        <b> Turns:</b> ${steps} instructions<br>
+                        <i> Via OSRM - knows jute field paths!</i>
                     `;
                     
                     // Fit map to route
@@ -98,7 +93,7 @@
                 }
             } catch (error) {
                 document.getElementById('routeInfo').innerHTML = 
-                    `❌ Route error: ${error.message}`;
+                    `Route error: ${error.message}`;
             }
         }
         
@@ -107,10 +102,10 @@
             calculateRoute(kuthibari);
         }
         
-        function routeToKGH() {
-            calculateRoute(kgh);
+        // Route buttons
+        function routeToCMK() {
+            calculateRoute(CMK);
         }
-        
         function clearRoute() {
             if (routeLayer) {
                 map.removeLayer(routeLayer);
